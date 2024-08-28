@@ -83,7 +83,7 @@ The registry-cache extension deploys a StatefulSet with a volume claim template.
 
 The `providerConfig.caches[].volume.size` field is the size of the registry cache volume. Defaults to `10Gi`. The size must be a positive quantity (greater than 0).
 This field is immutable. See [Increase the cache disk size](#increase-the-cache-disk-size) on how to resize the disk.
-The extension defines [alerts](../../../pkg/component/registrycaches/alerting-rules/registry-cache.rules.yaml) for the volume. See [Alerting for Users](https://github.com/gardener/gardener/blob/master/docs/monitoring/alerting.md#alerting-for-users) on how to enable notifications for Shoot cluster alerts.
+The extension defines [alerts](https://github.com/gardener/gardener-extension-registry-cache/blob/v0.10.0/pkg/component/registrycaches/monitoring.go#L40-L105) for the volume. See [Alerting for Users](https://github.com/gardener/gardener/blob/master/docs/monitoring/alerting.md#alerting-for-users) on how to enable notifications for Shoot cluster alerts.
 
 The `providerConfig.caches[].volume.storageClassName` field is the name of the StorageClass used by the registry cache volume.
 This field is immutable. If the field is not specified, then the [default StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/#default-storageclass) will be used.
@@ -100,6 +100,8 @@ The registry-cache extension sets this value as `HTTPS_PROXY` ENV in the Statefu
 
 The `providerConfig.caches[].proxy.noProxy` field contains settings for a proxy which is used by the registry cache.
 The registry-cache extension sets this value as `NO_PROXY` ENV in the StatefulSet.
+
+The `providerConfig.caches[].highAvailability` defines if the StatefulSet is scaled to 2 replicas. See [Increase the cache disk size](#high-availability) for more information.
 
 > **Note**: It is only possible to provide one set of credentials for one private upstream registry.
 
@@ -148,7 +150,9 @@ There is always the option to remove the cache from the Shoot spec and to readd 
 
 ## High Аvailability
 
-The registry cache runs with a single replica. This fact may lead to concerns for the high availability such as "What happens when the registry cache is down? Does containerd fail to pull the image?". As outlined in the [How does it work? section](#how-does-it-work), containerd is configured to fall back to the upstream registry if it fails to pull the image from the registry cache. Hence, when the registry cache is unavailable, the containerd's image pull operations are not affected because containerd falls back to image pull from the upstream registry.
+Per default the registry cache runs with a single replica. This fact may lead to concerns for the high availability such as "What happens when the registry cache is down? Does containerd fail to pull the image?". As outlined in the [How does it work? section](#how-does-it-work), containerd is configured to fall back to the upstream registry if it fails to pull the image from the registry cache. Hence, when the registry cache is unavailable, the containerd's image pull operations are not affected because containerd falls back to image pull from the upstream registry.
+
+In special cases where this is not enough (for example when using the registry cache with a proxy) it is possible to set `providerConfig.caches[].highAvailability` to `true`, this will add the label `high-availability-config.resources.gardener.cloud/type=server` and scale the statefulset to 2 replicas. The `topologySpreadConstraints` is added according to the cluster configuration. See also [High Availability of Deployed Components](https://gardener.cloud/docs/gardener/high-availability/#system-components).
 
 ## Possible Pitfalls
 

@@ -88,6 +88,11 @@ func (in *RegistryCache) DeepCopyInto(out *RegistryCache) {
 		*out = new(Proxy)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.HighAvailability != nil {
+		in, out := &in.HighAvailability, &out.HighAvailability
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
